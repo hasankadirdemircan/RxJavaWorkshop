@@ -1,10 +1,13 @@
 package jugistanbul.helper;
 
 import jugistanbul.entity.Speaker;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -19,6 +22,7 @@ public class ElasticSync {
 
     private final RestHighLevelClient client;
     private static final String INDEX = "speaker";
+    private final Logger logger = LoggerFactory.getLogger(ElasticSync.class);
 
     @Autowired
     public ElasticSync(@Qualifier("RestHighLevelClient") RestHighLevelClient client) {
@@ -43,14 +47,14 @@ public class ElasticSync {
                                     "updateTime", speaker.getUpdateTime());
 
                     client.index(indexRequest, RequestOptions.DEFAULT);
-
                     break;
 
                 case DELETE:
-
+                    final DeleteRequest deleteRequest = new DeleteRequest(INDEX).id(id);
+                    client.delete(deleteRequest, RequestOptions.DEFAULT);
             }
         } catch (Exception e){
-
+            logger.error("An exception was thrown", e);
         }
     }
 }

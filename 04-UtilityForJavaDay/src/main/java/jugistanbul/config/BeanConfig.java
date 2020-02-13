@@ -45,10 +45,11 @@ public class BeanConfig {
     @Autowired
     public PublishSubject<PersistObject> getSubject(final ElasticSync sync){
         final PublishSubject<PersistObject> subject = PublishSubject.create();
-
-        subject.doOnNext(sync::pushDocument).publish().connect();
+        subject.doOnNext(sync::pushDocument).doOnError(e -> logger.warn("An error occurred", e))
+                .serialize().publish().connect();
         return subject;
     }
+
     @Bean
     public ModelMapper modelMapper() {
         return new ModelMapper();

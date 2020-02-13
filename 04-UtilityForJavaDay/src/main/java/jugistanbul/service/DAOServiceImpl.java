@@ -131,6 +131,7 @@ public class DAOServiceImpl implements DAOService
 
     @Override
     public int deleteSpeaker(final Integer id) {
+        subject.onNext(new PersistObject(findSpeakerById(id), Operation.DELETE));
         return jdbcTemplate.update(String.format(DELETE_SPEAKER, id));
     }
 }
