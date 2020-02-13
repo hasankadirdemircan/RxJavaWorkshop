@@ -21,5 +21,5 @@ CREATE TABLE passengers (
 );
 
 INSERT INTO passengers (speaker, sunnyWeather, flightCostLimit, hotelCostLimit, certainDays) VALUES
-  ('Hüseyin Akdoğan', true, 2000, 500, '2020-02-10,2020-02-11,2020-02-12,2020-02-13'),
-  ('Altuğ Bilgin Altıntaş', true, 2500, 700, '2020-02-12,2020-02-13,2020-02-14,2020-02-15');
+  ('Hüseyin Akdoğan', true, 2000, 500, '2020-02-20,2020-02-21,2020-02-12,2020-02-23'),
+  ('Altuğ Bilgin Altıntaş', true, 2500, 700, '2020-02-12,2020-02-19,2020-02-20,2020-02-27');
