@@ -1,8 +1,11 @@
 package jugistanbul.service;
 
 import com.google.gson.Gson;
+import io.reactivex.subjects.PublishSubject;
 import jugistanbul.entity.Passengers;
 import jugistanbul.entity.Speaker;
+import jugistanbul.helper.Operation;
+import jugistanbul.helper.PersistObject;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -42,6 +45,7 @@ public class DAOServiceImpl implements DAOService
     private static final String ALL_CHANGE_DATA = "select * from speaker where updateTime > timestamp '%s'";
     private static final String ALL_PASSENGERS = "select * from travelassistance";
 
+    private final PublishSubject<PersistObject> subject;
     private final JdbcTemplate jdbcTemplate;
     private final RestHighLevelClient client;
     private final Gson gson;
@@ -49,10 +53,12 @@ public class DAOServiceImpl implements DAOService
 
     @Autowired
     public DAOServiceImpl(final JdbcTemplate jdbcTemplate,
-                          @Qualifier("RestHighLevelClient") final RestHighLevelClient client, final Gson gson){
+                          @Qualifier("RestHighLevelClient") final RestHighLevelClient client,
+                          final Gson gson, final PublishSubject<PersistObject> subject){
         this.jdbcTemplate = jdbcTemplate;
         this.client = client;
         this.gson = gson;
+        this.subject = subject;
     }
 
     @Override
@@ -110,6 +116,7 @@ public class DAOServiceImpl implements DAOService
         speaker.setUpdateTime(LocalDateTime.now());
         jdbcTemplate.update(String.format(INSERT_SPEAKER, speaker.getId(), speaker.getName(),
                 speaker.getTitle(), speaker.isApprove(), speaker.isRetracted(), speaker.getMail(), speaker.getUpdateTime()));
+        subject.onNext(new PersistObject(speaker, Operation.SaveOrUpdate));
         return speaker;
     }
 
@@ -118,6 +125,7 @@ public class DAOServiceImpl implements DAOService
         speaker.setUpdateTime(LocalDateTime.now());
         jdbcTemplate.update(String.format(UPDATE_SPEAKER, speaker.getName(), speaker.getTitle(),
                 speaker.isApprove(), speaker.isRetracted(), speaker.getMail(), speaker.getUpdateTime(), speaker.getId()));
+        subject.onNext(new PersistObject(speaker, Operation.SaveOrUpdate));
         return speaker;
     }
 

@@ -22,7 +22,7 @@ import java.util.List;
  * Created on 8.02.2020
  **/
 
-@Component
+//@Component
 public class SyncScheduler
 {
 

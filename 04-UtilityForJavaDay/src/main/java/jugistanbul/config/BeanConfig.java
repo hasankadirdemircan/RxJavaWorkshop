@@ -3,6 +3,9 @@ package jugistanbul.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
+import io.reactivex.subjects.PublishSubject;
+import jugistanbul.helper.ElasticSync;
+import jugistanbul.helper.PersistObject;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -19,6 +22,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -37,6 +41,14 @@ public class BeanConfig {
     private static final String INDEX_NAME = "speaker";
     private final Logger logger = LoggerFactory.getLogger(BeanConfig.class);
 
+    @Bean
+    @Autowired
+    public PublishSubject<PersistObject> getSubject(final ElasticSync sync){
+        final PublishSubject<PersistObject> subject = PublishSubject.create();
+
+        subject.doOnNext(sync::pushDocument).publish().connect();
+        return subject;
+    }
     @Bean
     public ModelMapper modelMapper() {
         return new ModelMapper();
