@@ -1,5 +1,9 @@
 package jugistanbul.controller;
 
+import com.sun.tools.javac.comp.Flow;
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 import jugistanbul.entity.Speaker;
 import jugistanbul.entity.SpeakerDTO;
 import jugistanbul.service.DAOService;
@@ -63,28 +67,18 @@ public class MainController
 
         final List<Speaker> speakers = daoService.findAllSpeakers();
 
-        final List<Pair<Speaker, Future<String>>> tasks = speakers
-                .stream().map(speaker -> Pair.of(speaker, sendEmailAsync(speaker)))
-                .collect(toList());
+        return Flowable.fromIterable(speakers)
+                .parallel(10)
+                .runOn(Schedulers.io())
+                .flatMap(speaker -> sendEmailAsync(speaker)
+                        .flatMap(s -> Flowable.<Speaker>empty()
+                        .doOnError(e -> logger.warn("Failed to send {}", speaker.getMail(), e)))
+                        .onErrorReturn(e -> speaker)
+                ).sequential().toList().blockingGet();
 
-        final List<Speaker> failures = tasks.stream()
-                .flatMap(pair -> {
-                    try {
-                        Future<String> future = pair.getRight();
-                        future.get(1, TimeUnit.SECONDS);
-                        return Stream.empty();
-                    } catch (Exception e) {
-                        Speaker speaker = pair.getLeft();
-                        logger.warn("Failed to send {}", speaker.getMail(), e);
-                        return Stream.of(speaker);
-                    }
-                })
-                .collect(toList());
-
-        return failures;
     }
 
-    public Future<String> sendEmailAsync(final Speaker speaker){
-        return pool.submit(() -> sendEmail.sendEmail(speaker));
+    public Flowable<String> sendEmailAsync(final Speaker speaker){
+        return Flowable.fromCallable(() -> sendEmail.sendEmail(speaker));
     }
 }
